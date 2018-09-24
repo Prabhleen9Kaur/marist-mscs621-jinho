@@ -1,76 +1,139 @@
-# Bluemix Python Web application
-This repository is part of lab for the *Marist Cloud Computing* class for Fall 2018,
+# Getting Started with Python on IBM Cloud
 
-The sample code is using [Flask microframework](http://flask.pocoo.org/) and is intented to test the Python support on [IBM's Bluemix](https://bluemix.net/) environment which is based on Cloud Foundry. It also uses [Redis](https://redis.io) as a database for storing JSON objects.
+To get started, we'll take you through a sample Python Flask app, help you set up a development environment, deploy to IBM Cloud and add a Cloudant database.
 
-IBM Bluemix contains the Python buildpack from [Cloud Foundry](https://github.com/cloudfoundry/python-buildpack) and so will be auto-detected as long as a requirements.txt or a setup.py is located in the root of your application.
+The following instructions are for deploying the application as a Cloud Foundry application. To deploy as a container to **IBM Cloud Kubernetes Service** instead, [see README-kubernetes.md](README-kubernetes.md)
 
-Follow the steps below to get the lab code and see how to deploy manually.
+## Prerequisites
 
-## Prerequisite Installation using Vagrant
-The easiest way to use this lab is with Vagrant and VirtualBox. if you don't have this software the first step is down download and install [VirtualBox](https://www.virtualbox.org/) and [Vagrant](https://www.vagrantup.com/)
+You'll need the following:
+* [IBM Cloud account](https://console.ng.bluemix.net/registration/)
+* [Cloud Foundry CLI](https://github.com/cloudfoundry/cli#downloads)
+* [Git](https://git-scm.com/downloads)
+* [Python](https://www.python.org/downloads/)
 
-## Get the lab code
-From a terminal navigate to a location where you want this application code to be downloaded to and issue:
-```bash
-    $ git clone https://github.com/jinho10/marist-mscs621-jinho.git
-    $ cd marist-mscs621-jinho
-```
-This will place you into an Ubuntu VM all set to run the code.
+## 1. Clone the sample app
 
-You can run the tests to make sure that the code works with the following command:
+Now you're ready to start working with the app. Clone the repo and change to the directory where the sample app is located.
+  ```
+git clone https://github.com/IBM-Cloud/get-started-python
+cd get-started-python
+  ```
 
-    $ nosetests -v --rednose --nologcapture
+  Peruse the files in the *get-started-python* directory to familiarize yourself with the contents.
 
-You can run the code to test it out in your browser with the following command:
+## 2. Run the app locally
 
-    $ python server.py
+Install the dependencies listed in the [requirements.txt](https://pip.readthedocs.io/en/stable/user_guide/#requirements-files) file to be able to run the app locally.
 
-You should be able to see it at: http://localhost:5000/
+You can optionally use a [virtual environment](https://packaging.python.org/installing/#creating-and-using-virtual-environments) to avoid having these dependencies clash with those of other Python projects or your operating system.
+  ```
+pip install -r requirements.txt
+  ```
 
-When you are done, you can use `Ctrl+C` to stop the server and then exit and shut down the vm with:
+Run the app.
+  ```
+python hello.py
+  ```
 
-## Deploy to Bluemix manually
-Before you can deploy this applicaiton to Bluemix you MUST edit the `manifest.yml` file and change the name of the application to something unique. I recommend changng the last two letters to your initials as a start. If that doesnt work, start adding numbers to make it unique.
+ View your app at: http://localhost:8000
 
-Then from a terminal login into Bluemix and set the api endpoint to the Bluemix region you wish to deploy to:
-```script
-cf login -a api.ng.bluemix.net
-```
-The login will ask you for you `email`(username) and `password`, plus the `organisation` and `space` if there is more than one to choose from.
+## 3. Prepare the app for deployment
 
-From the root directory of the application code execute the following to deploy the application to Bluemix. (By default the `route` (application URL) will be based on your application name so make sure your application name is unique or use the -n option on the cf push command to define your hostname)
-```script
-cf push <YOUR_APP_NAME> -m 64M
-```
-to deploy when you don't have a requirements.txt or setup.py then use:
-```script
-cf push <YOUR_APP_NAME> -m 64M -b https://github.com/cloudfoundry/python-buildpack
-```
-to deploy with a different hostname to the app name:
-```script
-cf push <YOUR_APP_NAME> -m 64M -n <YOUR_HOST_NAME>
-```
+To deploy to IBM Cloud, it can be helpful to set up a manifest.yml file. One is provided for you with the sample. Take a moment to look at it.
 
-## View App
-Once the application is deployed and started open a web browser and point to the application route defined at the end of the `cf push` command i.e. http://lab-bluemix-xx.mybluemix.net/. This will execute the code under the `/` app route defined in the `server.py` file. Navigate to `/pets` to see a list of pets returned as JSON objects.
+The manifest.yml includes basic information about your app, such as the name, how much memory to allocate for each instance and the route. In this manifest.yml **random-route: true** generates a random route for your app to prevent your route from colliding with others.  You can replace **random-route: true** with **host: myChosenHostName**, supplying a host name of your choice. [Learn more...](https://console.bluemix.net/docs/manageapps/depapps.html#appmanifest)
+ ```
+ applications:
+ - name: GetStartedPython
+   random-route: true
+   memory: 128M
+ ```
 
-## Structure of application
-**Procfile** - Contains the command to run when you application starts on Bluemix. It is represented in the form `web: <command>` where `<command>` in this sample case is to run the `py` command and passing in the the `server.py` script.
+## 4. Deploy the app
 
-**requirements.txt** - Contains the external python packages that are required by the application. These will be downloaded from the [python package index](https://pypi.python.org/pypi/) and installed via the python package installer (pip) during the buildpack's compile stage when you execute the cf push command. In this sample case we wish to download the [Flask package](https://pypi.python.org/pypi/Flask) at version 0.12 and [Redis package](https://pypi.python.org/pypi/Redis) at version greater than or equal to 2.10
+You can use the Cloud Foundry CLI to deploy apps.
 
-**runtime.txt** - Controls which python runtime to use. In this case we want to use 2.7.9.
+Choose your API endpoint
+   ```
+cf api <API-endpoint>
+   ```
 
-**README.md** - this readme.
+Replace the *API-endpoint* in the command with an API endpoint from the following list.
 
-**manifest.yml** - Controls how the app will be deployed in Bluemix and specifies memory and other services like Redis that are needed to be bound to it.
+|URL                             |Region          |
+|:-------------------------------|:---------------|
+| https://api.ng.bluemix.net     | US South       |
+| https://api.eu-de.bluemix.net  | Germany        |
+| https://api.eu-gb.bluemix.net  | United Kingdom |
+| https://api.au-syd.bluemix.net | Sydney         |
 
-**server.py** - the python application script. This is implemented as a simple [Flask](http://flask.pocoo.org/) application. The routes are defined in the application using the @app.route() calls. This application has a `/` route and a `/pets` route defined. The application deployed to Bluemix needs to listen to the port defined by the VCAP_APP_PORT environment variable as seen here:
-```python
-port = os.getenv('VCAP_APP_PORT', '5000')
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(port))
-```
+Login to your IBM Cloud account
 
-This is the port given to your application so that http requests can be routed to it. If the property is not defined then it falls back to port 5000 allowing you to run this sample application locally.
+  ```
+cf login
+  ```
+
+From within the *get-started-python* directory push your app to IBM Cloud
+  ```
+cf push
+  ```
+
+This can take a minute. If there is an error in the deployment process you can use the command `cf logs <Your-App-Name> --recent` to troubleshoot.
+
+When deployment completes you should see a message indicating that your app is running.  View your app at the URL listed in the output of the push command.  You can also issue the
+  ```
+cf apps
+  ```
+  command to view your apps status and see the URL.
+
+## 5. Add a database
+
+Next, we'll add a NoSQL database to this application and set up the application so that it can run locally and on IBM Cloud.
+
+1. Log in to IBM Cloud in your Browser. Browse to the `Dashboard`. Select your application by clicking on its name in the `Name` column.
+2. Click on `Connections` then `Connect new`.
+2. In the `Data & Analytics` section, select `Cloudant NoSQL DB` and `Create` the service.
+3. Select `Restage` when prompted. IBM Cloud will restart your application and provide the database credentials to your application using the `VCAP_SERVICES` environment variable. This environment variable is only available to the application when it is running on IBM Cloud.
+
+Environment variables enable you to separate deployment settings from your source code. For example, instead of hardcoding a database password, you can store this in an environment variable which you reference in your source code. [Learn more...](/docs/manageapps/depapps.html#app_env)
+
+## 6. Use the database
+
+We're now going to update your local code to point to this database. We'll create a json file that will store the credentials for the services the application will use. This file will get used ONLY when the application is running locally. When running in IBM Cloud, the credentials will be read from the VCAP_SERVICES environment variable.
+
+1. Create a file called `vcap-local.json` in the `get-started-python` directory with the following content:
+  ```
+  {
+    "services": {
+      "cloudantNoSQLDB": [
+        {
+          "credentials": {
+            "username":"CLOUDANT_DATABASE_USERNAME",
+            "password":"CLOUDANT_DATABASE_PASSWORD",
+            "host":"CLOUDANT_DATABASE_HOST"
+          },
+          "label": "cloudantNoSQLDB"
+        }
+      ]
+    }
+  }
+  ```
+
+2. Back in the IBM Cloud UI, select your App -> Connections -> Cloudant -> View Credentials
+
+3. Copy and paste the `username`, `password`, and `host` from the credentials to the same fields of the `vcap-local.json` file replacing **CLOUDANT_DATABASE_USERNAME**, **CLOUDANT_DATABASE_PASSWORD**, and **CLOUDANT_DATABASE_URL**.
+
+4. Run your application locally.
+  ```
+python hello.py
+  ```
+
+  View your app at: http://localhost:8000. Any names you enter into the app will now get added to the database.
+
+5. Make any changes you want and re-deploy to IBM Cloud!
+  ```
+cf push
+  ```
+
+  View your app at the URL listed in the output of the push command, for example, *myUrl.mybluemix.net*.
